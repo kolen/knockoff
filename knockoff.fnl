@@ -15,7 +15,8 @@
        {:space 0
         :ground 1
         :boulder 4
-        :player 16})
+        :player 16
+        :player-side 17})
 
 (local directions
        {:left   [-1  0]
@@ -30,10 +31,11 @@
   (set player.anim {:dir dir :frames 0}))
 
 (fn player-check-movement []
-  (when (key keybindings.left)   (player-start-move :left))
-  (when (key keybindings.right)  (player-start-move :right))
-  (when (key keybindings.top)    (player-start-move :top))
-  (when (key keybindings.bottom) (player-start-move :bottom)))
+  (if (key keybindings.left)   (player-start-move :left)
+      (key keybindings.right)  (player-start-move :right)
+      (key keybindings.top)    (player-start-move :top)
+      (key keybindings.bottom) (player-start-move :bottom)
+      (set player.anim :idle)))
 
 (fn player-move [dir]
   (let [[x y] player.pos
@@ -66,7 +68,10 @@
     (do
       (set player.anim.frames (+ 1 player.anim.frames))
       (if (= frames player-anim-frame-move) (player-try-move dir)
-          (= frames player-anim-frame-end-move) (set player.anim :idle)))))
+          ;; if it's last animation frame, check if movement
+          ;; continues. This will set animation to idle if no movement
+          ;; controls touched.
+          (= frames player-anim-frame-end-move) (player-check-movement)))))
 
 (fn game-level-start []
   (for [x 0 30]
@@ -82,10 +87,21 @@
     (set stage :game)
     (game-level-start)))
 
+(fn tiles-remap [tile-id x y]
+  (if (= tile-id tile-ids.player)
+      (match player.anim
+        :idle tile-id
+        {:dir dir :frames frames}
+        (let [sprite-num (% (// player.anim.frames 4) 3)
+              new-tile-id (+ tile-ids.player-side sprite-num)
+              flip (if (or (= dir :left) (= dir :top)) 1 0)]
+          (values new-tile-id flip)))
+      tile-id))
+
 (fn on-frame-game []
   (update-player)
   (cls)
-  (map))
+  (map 0 0 30 17 0 0 -1 1 tiles-remap))
 
 (fn on-frame []
   (match stage
