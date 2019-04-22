@@ -24,6 +24,9 @@
         :top    [ 0 -1]
         :bottom [ 0  1]})
 
+(local sounds
+       {:noise 0})
+
 (local player-anim-frame-end-move 16)
 (local player-anim-frame-move 4)
 
@@ -53,25 +56,26 @@
         [xdiff ydiff] (. directions dir)
         [newx newy] [(+ x xdiff) (+ y ydiff)]
         target-tile (mget newx newy)]
-    (when (or (= target-tile tile-ids.ground)
-              (= target-tile tile-ids.space))
-      (player-move dir))
-    (when (and (= target-tile tile-ids.boulder)
-               (or (= dir :left) (= dir :right)))
-      (player-start-push-boulder))))
+    (if (= target-tile tile-ids.space)
+        (do (sfx sounds.noise 48 2 0 4)
+            (player-move dir))
+        (= target-tile tile-ids.ground)
+        (do (sfx sounds.noise 32 4 0 4)
+            (player-move dir))
+        (and (= target-tile tile-ids.boulder)
+             (or (= dir :left) (= dir :right)))
+        (player-start-push-boulder))))
 
 (fn update-player []
-  (match player.anim
-    :idle ;; idle - allow to move
-    (player-check-movement)
-    {:dir dir :frames frames} ;; moving - handle it
-    (do
-      (set player.anim.frames (+ 1 player.anim.frames))
-      (if (= frames player-anim-frame-move) (player-try-move dir)
-          ;; if it's last animation frame, check if movement
-          ;; continues. This will set animation to idle if no movement
-          ;; controls touched.
-          (= frames player-anim-frame-end-move) (player-check-movement)))))
+  (if (= player.anim :idle)
+      (player-check-movement)
+      (do
+        (set player.anim.frames (+ 1 player.anim.frames))
+        (if (= player.anim.frames player-anim-frame-move) (player-try-move player.anim.dir)
+            ;; if it's last animation frame, check if movement
+            ;; continues. This will set animation to idle if no movement
+            ;; controls touched.
+            (= player.anim.frames player-anim-frame-end-move) (player-check-movement)))))
 
 (fn game-level-start []
   (for [x 0 30]
@@ -89,10 +93,8 @@
 
 (fn tiles-remap [tile-id x y]
   (if (= tile-id tile-ids.player)
-      (match player.anim
-        :idle tile-id
-        {:dir dir :frames frames}
-        (let [sprite-num (% (// player.anim.frames 4) 3)
+      (if (= player.anim :idle) tile-id
+          (let [sprite-num (% (// player.anim.frames 4) 3)
               new-tile-id (+ tile-ids.player-side sprite-num)
               flip (if (or (= dir :left) (= dir :top)) 1 0)]
           (values new-tile-id flip)))
@@ -104,8 +106,9 @@
   (map 0 0 30 17 0 0 -1 1 tiles-remap))
 
 (fn on-frame []
-  (match stage
-    :intro (on-frame-intro)
-    :game (on-frame-game)))
+  (if (= stage :intro)
+      (on-frame-intro)
+      (= stage :game)
+      (on-frame-game)))
 
 (global TIC on-frame)
