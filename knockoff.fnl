@@ -95,8 +95,8 @@
   (if (= tile-id tile-ids.player)
       (if (= player.anim :idle) tile-id
           (let [sprite-num (% (// player.anim.frames 4) 3)
-              new-tile-id (+ tile-ids.player-side sprite-num)
-              flip (if (or (= dir :left) (= dir :top)) 1 0)]
+                new-tile-id (+ tile-ids.player-side sprite-num)
+                flip (if (or (= player.anim.dir :left) (= player.anim.dir :top)) 1 0)]
           (values new-tile-id flip)))
       tile-id))
 
