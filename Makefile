@@ -1,4 +1,4 @@
-TIC80=/Applications/tic80pro.app/Contents/MacOS/tic80pro
+TIC80=/Applications/tic80.app/Contents/MacOS/tic80
 
 run:
 	$(TIC80) knockoff.tic -code-watch knockoff.fnl
