@@ -54,21 +54,21 @@
         (set game.player.pos [x y])
         (trace (.. "set player pos " x ", " y))))))
 
-(fn on_frame_intro []
+(fn on-frame-intro []
   (cls)
   (print "intro" 10 10)
   (when (key 48)
     (set stage :game)
     (game-level-start)))
 
-(fn on_frame_game []
+(fn on-frame-game []
   (update-player)
   (cls)
   (map))
 
-(fn on_frame []
+(fn on-frame []
   (match stage
-    :intro (on_frame_intro)
-    :game (on_frame_game)))
+    :intro (on-frame-intro)
+    :game (on-frame-game)))
 
-(global TIC on_frame)
+(global TIC on-frame)
