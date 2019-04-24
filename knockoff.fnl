@@ -83,7 +83,8 @@
 (fn fallible-check-fall [x y]
   (fallible-check-slippery-fall (- x 1) y x)
   (fallible-check-slippery-fall (+ x 1) y x)
-  (fallible-check-slippery-fall x (+ y 1) x)
+  (fallible-check-slippery-fall (+ x 1) (+ y 1) x)
+  (fallible-check-slippery-fall (- x 1) (+ y 1) x)
   (fallible-check-direct-fall x y))
 
 (local fallible-step-period 32)
