@@ -110,21 +110,17 @@
               (tset fallible :frames 0))
             ;; No space to move left - just stay there, entity not
             ;; needed anymore
-            (do
-              (trace "no more space to slide")
-              (entity-delete entity-id)))
+            (entity-delete entity-id))
 
         ;; Falling down
         (= (mget (. fallible :x) (+ 1 (. fallible :y))) tile-ids.space)
         (do (make-space (. fallible :x) (. fallible :y))
             (mset (. fallible :x) (+ 1 (. fallible :y)) (. fallible :fallible))
             (tset fallible :frames 0)
-            (tset fallible :y (+ 1 (. fallible :y)))
-            (trace "falling"))
+            (tset fallible :y (+ 1 (. fallible :y))))
 
         ;; No more place to fall
         (do
-          (trace "no more place to fall")
           (entity-delete entity-id)
           ;; FIXME: do it correctly, currently it duplicates blocks
           (fallible-check-fall (- 1 (. fallible :x)) (+ 1 (. fallible :y)))
