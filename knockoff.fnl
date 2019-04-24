@@ -9,6 +9,8 @@
 (var entities-last-id 0)
 (var entities-enqueued {})
 
+(var game {:frame 0})
+
 (local keybindings
        {:left 1
         :right 4
@@ -18,9 +20,9 @@
 (local tile-ids
        {:space 0
         :ground 1
+        :wall 3
         :boulder 4
-        :gem -1 ; todo
-        :wall -1 ; todo
+        :gem 5
         :player 16
         :player-side 17})
 
@@ -207,10 +209,13 @@
           (let [sprite-num (% (// player.anim.frames 4) 3)
                 new-tile-id (+ tile-ids.player-side sprite-num)
                 flip (if (or (= player.anim.dir :left) (= player.anim.dir :top)) 1 0)]
-          (values new-tile-id flip)))
+            (values new-tile-id flip)))
+      (= tile-id tile-ids.gem)
+      (+ tile-id (% (// game.frame 3) 4))
       tile-id))
 
 (fn on-frame-game []
+  (set game.frame (% (+ 1 game.frame) 60))
   (update-player)
   (update-entities)
   (cls)
