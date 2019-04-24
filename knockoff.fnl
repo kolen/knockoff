@@ -31,7 +31,8 @@
         :bottom [ 0  1]})
 
 (local sounds
-       {:noise 0})
+       {:noise 0
+        :boulder 1})
 
 (local player-anim-frame-end-move 16)
 (local player-anim-frame-move 4)
@@ -128,7 +129,7 @@
           ;; FIXME: do it correctly, currently it duplicates blocks
           (fallible-check-fall (- 1 (. fallible :x)) (+ 1 (. fallible :y)))
           (fallible-check-fall (+ 1 (. fallible :x)) (+ 1 (. fallible :y)))
-          ))))
+          (sfx sounds.boulder 32 40 0 10)))))
 
 (fn fallible-update [entity-id]
   (let [fallible (. entities entity-id)]
