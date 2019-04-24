@@ -125,7 +125,10 @@
           ;; FIXME: do it correctly, currently it duplicates blocks
           (fallible-check-fall (- 1 (. fallible :x)) (+ 1 (. fallible :y)))
           (fallible-check-fall (+ 1 (. fallible :x)) (+ 1 (. fallible :y)))
-          (sfx sounds.boulder 32 40 0 10)))))
+          (sfx sounds.boulder 29 30 2 10) ;; FIXME: sound should play
+                                          ;; right after falling down,
+                                          ;; not here
+          ))))
 
 (fn fallible-update [entity-id]
   (let [fallible (. entities entity-id)]
@@ -160,10 +163,10 @@
         [newx newy] [(+ x xdiff) (+ y ydiff)]
         target-tile (mget newx newy)]
     (if (= target-tile tile-ids.space)
-        (do (sfx sounds.noise 48 2 0 4)
+        (do (sfx sounds.noise 48 2 0 1)
             (player-move dir))
         (= target-tile tile-ids.ground)
-        (do (sfx sounds.noise 32 4 0 4)
+        (do (sfx sounds.noise 32 4 0 1)
             (player-move dir))
         (and (= target-tile tile-ids.boulder)
              (or (= dir :left) (= dir :right)))
