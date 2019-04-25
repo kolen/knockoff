@@ -96,6 +96,26 @@
   (mset x y tile-ids.space)
   (fallible-check-fall x y))
 
+;; check if fallible should continue to fall, or stop, or start
+;; sliding to the side
+(fn fallible-check-continue [entity-id]
+  (let [fallible (. entities entity-id)
+        tile-id-below (mget (. fallible :x)
+                            (+ 1 (. fallible :y)))
+        tile-id-slip-right (mget (+ 1 (. fallible :x))
+                                 (+ 1 (. fallible :y)))
+        tile-id-slip-left (mget (- 1 (. fallible :x))
+                                (+ 1 (. fallible :y)))]
+    (when (~= tile-id-below tile-ids.space)
+      (sfx sounds.boulder 29 30 2 10)
+      (if (and (fallible-slippery? tile-id-below) (= tile-id-left tile-ids.space))
+          (do (tset fallible :targetx (- (. fallible :x) 1))
+              (tset fallible :frames 0))
+          (and (fallible-slippery? tile-id-below) (= tile-id-right tile-ids.space))
+          (do (tset fallible :targetx (+ (. fallible :x) 1))
+              (tset fallible :frames 0))
+          (entity-delete entity-id)))))
+
 (fn fallible-step [entity-id]
   (let [fallible (. entities entity-id)]
     ;; destructuring would be handy but it might be broken in stable
@@ -119,18 +139,11 @@
         (do (make-space (. fallible :x) (. fallible :y))
             (mset (. fallible :x) (+ 1 (. fallible :y)) (. fallible :fallible))
             (tset fallible :frames 0)
-            (tset fallible :y (+ 1 (. fallible :y))))
+            (tset fallible :y (+ 1 (. fallible :y)))
+            (fallible-check-continue entity-id))
 
         ;; No more place to fall
-        (do
-          (entity-delete entity-id)
-          ;; FIXME: do it correctly, currently it duplicates blocks
-          (fallible-check-fall (- 1 (. fallible :x)) (+ 1 (. fallible :y)))
-          (fallible-check-fall (+ 1 (. fallible :x)) (+ 1 (. fallible :y)))
-          (sfx sounds.boulder 29 30 2 10) ;; FIXME: sound should play
-                                          ;; right after falling down,
-                                          ;; not here
-          ))))
+        (entity-delete entity-id))))
 
 (fn fallible-update [entity-id]
   (let [fallible (. entities entity-id)]
