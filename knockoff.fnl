@@ -122,8 +122,12 @@
   (let [fallible (. entities entity-id)]
     ;; destructuring would be handy but it might be broken in stable
     ;; tic-80, TODO: check if it works
-    (if (. fallible :targetx)
+    (if (~= (. fallible :fallible) (mget (. fallible :x) (. fallible :y)))
+        ;; Fallible might be eaten/killed by explosion "concurrently"
+        (entity-delete entity-id)
+
         ;; Falling on the side (slippering)
+        (. fallible :targetx)
         (if (= (mget (. fallible :targetx) (. fallible :y)) tile-ids.space)
             ;; Move to slipping direction
             (do
