@@ -9,7 +9,9 @@
 (var entities-last-id 0)
 (var entities-enqueued {})
 
-(var game {:frame 0})
+(var game {:frame 0
+           :gems {:to-eat 32
+                  :eaten 0}})
 
 (local keybindings
        {:left 1
@@ -172,6 +174,15 @@
 (fn player-start-push-boulder []
   (set player.anim.push true))
 
+(fn player-gems-reached []
+  (trace "Number of gems reached"))
+
+(fn player-eat-gem []
+  (sfx sounds.noise 64 4 0 1); FIXME: correct gem sound
+  (set game.gems.eaten (+ 1 (. game.gems.to-eat)))
+  (when (>= game.gems.eaten game.gems.to-eat)
+    (player-gems-reached)))
+
 (fn player-try-move [dir]
   (let [[x y] player.pos
         [xdiff ydiff] (. directions dir)
@@ -182,6 +193,9 @@
             (player-move dir))
         (= target-tile tile-ids.ground)
         (do (sfx sounds.noise 32 4 0 1)
+            (player-move dir))
+        (= target-tile tile-ids.gem)
+        (do (player-eat-gem)
             (player-move dir))
         (and (= target-tile tile-ids.boulder)
              (or (= dir :left) (= dir :right)))
