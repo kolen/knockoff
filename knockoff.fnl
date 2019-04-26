@@ -252,7 +252,7 @@
   (when (= (% game.frame 30) 0)
     (let [[cam-x cam-y] game.camera
           screen-w 30
-          screen-h 16
+          screen-h 17
           [player-x player-y] player.pos
           x-lim-min (+ cam-x 6)
           x-lim-max (+ cam-x (- screen-w 6))
