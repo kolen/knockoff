@@ -285,8 +285,38 @@
   (cls)
   (map-render))
 
+(var intro {:frame 0
+            :glitter nil
+            :glitter-frame 0})
+
 (fn intro-on-frame []
+  (set intro.frame (% (+ 1 intro.frame) 30))
+  (when (= intro.frame 0)
+    (set intro.glitter [(math.random 64 80) (math.random 40 56)])
+    (set intro.glitter-frame 0))
   (cls)
+  (fn draw-wall [wall-x flip]
+    (let [wall-y 8]
+      (spr 160 wall-x wall-y -1 1 flip 0 2 2)
+      (for [y 0 3] (spr 192 wall-x (+ wall-y (* y 16)) -1 1 flip 0 2 2))
+      (spr 224 wall-x (+ wall-y (* 16 4)) -1 1 flip 0 2 2)))
+  ;; walls
+  (draw-wall 16 0)
+  (draw-wall (- 240 32) 1)
+  ;; floor
+  (for [x 4 25] (spr 248 (* 8 x) 80))
+  ;; logo
+  (spr 96 112 32 -1 1 0 0 10 2)
+  ;; froggy
+  (spr 137 32 24 -1 1 0 0 7 8)
+  ;; text
+  (print "Press space to continue" 56 112 10)
+  (when intro.glitter
+    (let [[glitter-x glitter-y] intro.glitter]
+      (if (< intro.glitter-frame 9)
+          (do (spr (+ 245 (// intro.glitter-frame 3)) glitter-x glitter-y 0)
+              (set intro.glitter-frame (+ 1 intro.glitter-frame)))
+          (set intro.glitter nil))))
   (when (key 48)
     (global TIC game-on-frame)
     (game-level-start)))
