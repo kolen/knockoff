@@ -11,7 +11,10 @@
 
 (var game {:frame 0
            :gems {:to-eat 32
-                  :eaten 0}})
+                  :eaten 0}
+           :camera [0 0]
+           :camera-frame 0
+           :level-boundaries [0 0 (* 30 2) (* 16 2)]})
 
 (local keybindings
        {:left 1
@@ -79,7 +82,7 @@
 (fn fallible-check-slippery-fall [x y holex]
   (when (and (fallible-slippery? (mget x y))
              (fallible-fallible? (mget x (- y 1)))
-             (= (mget holex y) tile-ids.space))
+             (= (mget holex y) tile-ids.spage))
     (fallible-fall x (- y 1) holex)))
 
 ;; check that fallible can fall after making space at x, y (assuming
@@ -234,7 +237,7 @@
     (set stage :game)
     (game-level-start)))
 
-(fn tiles-remap [tile-id x y]
+(fn map-tiles-remap [tile-id x y]
   (if (= tile-id tile-ids.player)
       (if (= player.anim :idle) tile-id
           (let [sprite-num (% (// player.anim.frames 4) 3)
@@ -245,12 +248,51 @@
       (+ tile-id (% (// game.frame 3) 4))
       tile-id))
 
+(fn map-camera-follow []
+  (when (= (% game.frame 30) 0)
+    (let [[cam-x cam-y] game.camera
+          screen-w 30
+          screen-h 16
+          [player-x player-y] player.pos
+          x-lim-min (+ cam-x 6)
+          x-lim-max (+ cam-x (- screen-w 6))
+          y-lim-min (+ cam-y 4)
+          y-lim-max (+ cam-y (- screen-h 4))
+          [lvl-x-a lvl-y-a lvl-x-b1 lvl-y-b1] game.level-boundaries
+          [lvl-x-b lvl-y-b] [(- lvl-x-b1 screen-w)
+                             (- lvl-y-b1 screen-h)]
+          [speed-x speed-y] [(if (< player-x x-lim-min) -1
+                                 (> player-x x-lim-max) 1
+                                 0)
+                             (if (< player-y y-lim-min) -1
+                                 (> player-y y-lim-max) 1
+                                 0)]
+          new-cam-x1 (+ cam-x speed-x)
+          new-cam-y1 (+ cam-y speed-y)
+          new-cam-x (if (< new-cam-x1 lvl-x-a) lvl-x-a
+                        (> new-cam-x1 lvl-x-b) lvl-x-b
+                        new-cam-x1)
+          new-cam-y (if (< new-cam-y1 lvl-y-a) lvl-y-a
+                        (> new-cam-y1 lvl-y-b) lvl-y-b
+                        new-cam-y1)]
+      (tset game :camera [new-cam-x new-cam-y]))))
+
+(fn map-render []
+  (let [[cam-x cam-y] game.camera]
+    (map cam-x cam-y
+         30 16 ;; width and height
+         0 8   ;; skip first line, which contain score, etc
+         -1    ;; transparent color
+         1     ;; scale
+         map-tiles-remap)))
+
 (fn on-frame-game []
   (set game.frame (% (+ 1 game.frame) 60))
   (update-player)
   (update-entities)
+  (map-camera-follow)
   (cls)
-  (map 0 0 30 17 0 0 -1 1 tiles-remap))
+  (map-render))
 
 (fn on-frame []
   (if (= stage :intro)
