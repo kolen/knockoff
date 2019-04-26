@@ -1,7 +1,5 @@
 ;; script: fennel
 
-(var stage :intro)
-
 (var player {:pos [2 2]
              :anim :idle})
 
@@ -230,13 +228,6 @@
       (when (= (mget x y) (. tile-ids :player))
         (set player.pos [x y])))))
 
-(fn on-frame-intro []
-  (cls)
-  (print "intro" 10 10)
-  (when (key 48)
-    (set stage :game)
-    (game-level-start)))
-
 (fn map-tiles-remap [tile-id x y]
   (if (= tile-id tile-ids.player)
       (if (= player.anim :idle) tile-id
@@ -286,7 +277,7 @@
          1     ;; scale
          map-tiles-remap)))
 
-(fn on-frame-game []
+(fn game-on-frame []
   (set game.frame (% (+ 1 game.frame) 60))
   (update-player)
   (update-entities)
@@ -294,10 +285,10 @@
   (cls)
   (map-render))
 
-(fn on-frame []
-  (if (= stage :intro)
-      (on-frame-intro)
-      (= stage :game)
-      (on-frame-game)))
+(fn intro-on-frame []
+  (cls)
+  (when (key 48)
+    (global TIC game-on-frame)
+    (game-level-start)))
 
-(global TIC on-frame)
+(global TIC intro-on-frame)
