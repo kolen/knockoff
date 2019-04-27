@@ -111,10 +111,10 @@
                                 (+ 1 (. fallible :y)))]
     (when (~= tile-id-below tile-ids.space)
       (sfx sounds.boulder 29 30 2 10)
-      (if (and (fallible-slippery? tile-id-below) (= tile-id-left tile-ids.space))
+      (if (and (fallible-slippery? tile-id-below) (= tile-id-slip-left tile-ids.space))
           (do (tset fallible :targetx (- (. fallible :x) 1))
               (tset fallible :frames 0))
-          (and (fallible-slippery? tile-id-below) (= tile-id-right tile-ids.space))
+          (and (fallible-slippery? tile-id-below) (= tile-id-slip-right tile-ids.space))
           (do (tset fallible :targetx (+ (. fallible :x) 1))
               (tset fallible :frames 0))
           (entity-delete entity-id)))))
