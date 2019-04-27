@@ -80,7 +80,7 @@
 (fn fallible-check-slippery-fall [x y holex]
   (when (and (fallible-slippery? (mget x y))
              (fallible-fallible? (mget x (- y 1)))
-             (= (mget holex y) tile-ids.spage))
+             (= (mget holex y) tile-ids.space))
     (fallible-fall x (- y 1) holex)))
 
 ;; check that fallible can fall after making space at x, y (assuming
