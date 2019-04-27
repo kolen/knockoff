@@ -33,7 +33,10 @@
        {:left   [-1  0]
         :right  [ 1  0]
         :top    [ 0 -1]
-        :bottom [ 0  1]})
+        :bottom [ 0  1]
+        :bottom-left  [-1 -1]
+        :bottom-right [ 1  1]
+        :center       [ 0  0]})
 
 (local sounds
        {:noise 0
@@ -53,6 +56,12 @@
 (fn entity-flush-enqueued []
   (each [id data (pairs entities-enqueued)] (tset entities id data))
   (set entities-enqueued {}))
+
+(fn map-peek-near [entity dir]
+  (let [[orig-x orig-y] [(. entity :x) (. entity :y)]
+        [off-x off-y] (. directions dir)
+        [x y] [(+ orig-x off-x) (+ orig-y off-y)]]
+    (mget x y)))
 
 (fn fallible-slippery? [tile-id]
   (or (= tile-id tile-ids.boulder)
@@ -103,18 +112,17 @@
 ;; sliding to the side
 (fn fallible-check-continue [entity-id]
   (let [fallible (. entities entity-id)
-        tile-id-below (mget (. fallible :x)
-                            (+ 1 (. fallible :y)))
-        tile-id-slip-right (mget (+ 1 (. fallible :x))
-                                 (+ 1 (. fallible :y)))
-        tile-id-slip-left (mget (- 1 (. fallible :x))
-                                (+ 1 (. fallible :y)))]
+        tile-id-below (map-peek-near fallible :bottom)]
     (when (~= tile-id-below tile-ids.space)
       (sfx sounds.boulder 29 30 2 10)
-      (if (and (fallible-slippery? tile-id-below) (= tile-id-slip-left tile-ids.space))
+      (if (and (fallible-slippery? tile-id-below)
+               (= (map-peek-near fallible :left)        tile-ids.space)
+               (= (map-peek-near fallible :bottom-left) tile-ids.space))
           (do (tset fallible :targetx (- (. fallible :x) 1))
               (tset fallible :frames 0))
-          (and (fallible-slippery? tile-id-below) (= tile-id-slip-right tile-ids.space))
+          (and (fallible-slippery? tile-id-below)
+               (= (map-peek-near fallible :right)        tile-ids.space)
+               (= (map-peek-near fallible :bottom-right) tile-ids.space))
           (do (tset fallible :targetx (+ (. fallible :x) 1))
               (tset fallible :frames 0))
           (entity-delete entity-id)))))
