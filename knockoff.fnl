@@ -192,7 +192,7 @@
 
 (fn player-eat-gem []
   (sfx sounds.noise 64 4 0 1); FIXME: correct gem sound
-  (set game.gems.eaten (+ 1 (. game.gems.to-eat)))
+  (set game.gems.eaten (+ 1 (. game.gems.eaten)))
   (when (>= game.gems.eaten game.gems.to-eat)
     (player-gems-reached)))
 
