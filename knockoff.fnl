@@ -8,7 +8,7 @@
 (var entities-enqueued {})
 
 (var game {:frame 0
-           :gems {:to-eat 2
+           :gems {:to-eat 16
                   :eaten 0}
            :camera [0 0]
            :camera-frame 0
