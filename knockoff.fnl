@@ -87,7 +87,6 @@
 ;; fall fallible at x, y (coordinates of actual fallible, not empty
 ;; space, unlike fallible-check-fall)
 (fn fallible-fall [x y targetx]
-  (trace (.. "fall " x " " targetx " " y))
   (if (= targetx x)
       (entity-create {:fallible (mget x y) :x x :y y :frames 0})
       (entity-create {:fallible (mget x y) :x x :y y :targetx targetx :frames 0})))
