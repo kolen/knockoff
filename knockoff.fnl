@@ -285,13 +285,17 @@
          1     ;; scale
          map-tiles-remap)))
 
+(fn ui-render []
+  (print (.. game.gems.eaten " / " game.gems.to-eat) 112 0))
+
 (fn game-on-frame []
   (set game.frame (% (+ 1 game.frame) 60))
   (update-player)
   (update-entities)
   (map-camera-follow)
   (cls)
-  (map-render))
+  (map-render)
+  (ui-render))
 
 (var intro {:frame 0
             :glitter nil
