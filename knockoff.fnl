@@ -28,6 +28,7 @@
         :boulder 4
         :gem 5
         :exit-open 9
+        :explosion 10
         :player 16
         :player-side 17
         :light-rays 20
@@ -121,12 +122,22 @@
 
 (fn explosion-create-tile [x y]
   (when (~= (mget x y) tile-ids.durable-wall)
-    (make-space x y)))
+    (mset x y tile-ids.explosion)
+    (entity-create {:explosion 0 :x x :y y})))
 
 (fn explosion-create [x y]
   (for [x1 (- x 1) (+ x 1)]
       (for [y1 (- y 1) (+ y 1)]
         (explosion-create-tile x1 y1))))
+
+(fn explosion-update [id]
+  (let [explosion (. entities id)]
+    (set explosion.explosion (+ explosion.explosion 1))
+    (if (< explosion.explosion 16)
+        (if (= 0 (% explosion.explosion 4))
+            (mset explosion.x explosion.y (+ tile-ids.explosion (// explosion.explosion 4))))
+        (do (make-space explosion.x explosion.y)
+            (entity-delete id)))))
 
 (fn player-die []
   (let [[x y] player.pos] (explosion-create x y))
@@ -260,7 +271,8 @@
 
 (fn update-entities []
   (each [id data (pairs entities)]
-    (if (. data :fallible) (fallible-update id)))
+    (if (. data :fallible) (fallible-update id))
+    (if (. data :explosion) (explosion-update id)))
   (entity-flush-enqueued))
 
 (fn game-level-start []
@@ -336,6 +348,7 @@
     (set game.light-rays (- game.light-rays 1))
     (when (= 0 game.light-rays) (set game.light-rays nil)))
   (when (not player.dead) (update-player))
+  (when (and player.dead (key 48)) (reset))
   (update-entities)
   (map-camera-follow)
   (cls)
