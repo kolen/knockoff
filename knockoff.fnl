@@ -119,6 +119,19 @@
   (mset x y tile-ids.space)
   (fallible-check-fall x y))
 
+(fn explosion-create-tile [x y]
+  (when (~= (mget x y) tile-ids.durable-wall)
+    (make-space x y)))
+
+(fn explosion-create [x y]
+  (for [x1 (- x 1) (+ x 1)]
+      (for [y1 (- y 1) (+ y 1)]
+        (explosion-create-tile x1 y1))))
+
+(fn player-die []
+  (let [[x y] player.pos] (explosion-create x y))
+  (set player.dead true))
+
 ;; check if fallible should continue to fall, or stop, or start
 ;; sliding to the side
 (fn fallible-check-continue [entity-id]
@@ -128,6 +141,8 @@
       (if (= (. fallible :fallible) tile-ids.gem)
           (sfx sounds.gem 100 8 0 5)
           (sfx sounds.boulder 29 30 2 10))
+      (if (= tile-id-below tile-ids.player)
+          (player-die))
       (if (and (fallible-slippery? tile-id-below)
                (= (map-peek-near fallible :left)        tile-ids.space)
                (= (map-peek-near fallible :bottom-left) tile-ids.space))
@@ -312,14 +327,15 @@
          map-tiles-remap)))
 
 (fn ui-render []
-  (print (.. game.gems.eaten " / " game.gems.to-eat) 112 0))
+  (if player.dead (print "You died" 98 0)
+      (print (.. game.gems.eaten " / " game.gems.to-eat) 112 0)))
 
 (fn game-on-frame []
   (set game.frame (% (+ 1 game.frame) 60))
   (when game.light-rays
     (set game.light-rays (- game.light-rays 1))
     (when (= 0 game.light-rays) (set game.light-rays nil)))
-  (update-player)
+  (when (not player.dead) (update-player))
   (update-entities)
   (map-camera-follow)
   (cls)
