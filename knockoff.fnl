@@ -8,7 +8,7 @@
 (var entities-enqueued {})
 
 (var game {:frame 0
-           :gems {:to-eat 32
+           :gems {:to-eat 2
                   :eaten 0}
            :camera [0 0]
            :camera-frame 0
@@ -23,11 +23,15 @@
 (local tile-ids
        {:space 0
         :ground 1
+        :durable-wall 2
         :wall 3
         :boulder 4
         :gem 5
+        :exit-open 9
         :player 16
-        :player-side 17})
+        :player-side 17
+        :light-rays 20
+        :exit 32})
 
 (local directions
        {:left   [-1  0]
@@ -40,7 +44,9 @@
 
 (local sounds
        {:noise 0
-        :boulder 1})
+        :boulder 1
+        :gem 2
+        :square 4})
 
 (local player-anim-frame-end-move 16)
 (local player-anim-frame-move 4)
@@ -62,6 +68,12 @@
         [off-x off-y] (. directions dir)
         [x y] [(+ orig-x off-x) (+ orig-y off-y)]]
     (mget x y)))
+
+(fn winscreen-frame []
+  (print "Congratulations you won!" 0 0))
+
+(fn game-win []
+  (global TIC winscreen-frame))
 
 (fn fallible-slippery? [tile-id]
   (or (= tile-id tile-ids.boulder)
@@ -114,7 +126,9 @@
   (let [fallible (. entities entity-id)
         tile-id-below (map-peek-near fallible :bottom)]
     (when (~= tile-id-below tile-ids.space)
-      (sfx sounds.boulder 29 30 2 10)
+      (if (= (. fallible :fallible) tile-ids.gem)
+          (sfx sounds.gem 100 8 0 5)
+          (sfx sounds.boulder 29 30 2 10))
       (if (and (fallible-slippery? tile-id-below)
                (= (map-peek-near fallible :left)        tile-ids.space)
                (= (map-peek-near fallible :bottom-left) tile-ids.space))
@@ -188,12 +202,15 @@
   (set player.anim.push true))
 
 (fn player-gems-reached []
-  (trace "Number of gems reached"))
+  (let [[exit-x exit-y] game.exit-pos]
+    (mset exit-x exit-y tile-ids.exit-open)
+    (sfx sounds.square 48 10 0 10)
+    (set game.light-rays 120)))
 
 (fn player-eat-gem []
-  (sfx sounds.noise 64 4 0 1); FIXME: correct gem sound
+  (sfx sounds.gem 100 8 0 10)
   (set game.gems.eaten (+ 1 (. game.gems.eaten)))
-  (when (>= game.gems.eaten game.gems.to-eat)
+  (when (= game.gems.eaten game.gems.to-eat)
     (player-gems-reached)))
 
 (fn player-try-move [dir]
@@ -210,6 +227,8 @@
         (= target-tile tile-ids.gem)
         (do (player-eat-gem)
             (player-move dir))
+        (= target-tile tile-ids.exit-open)
+        (game-win)
         (and (= target-tile tile-ids.boulder)
              (or (= dir :left) (= dir :right)))
         (player-start-push-boulder))))
@@ -231,10 +250,14 @@
   (entity-flush-enqueued))
 
 (fn game-level-start []
-  (for [x 0 30]
-    (for [y 0 16]
-      (when (= (mget x y) (. tile-ids :player))
-        (set player.pos [x y])))))
+  (let [[_ _ max-x max-y] game.level-boundaries]
+    (for [x 0 max-x]
+      (for [y 0 max-y]
+        (when (= (mget x y) tile-ids.player)
+          (set player.pos [x y]))
+        (when (= (mget x y) tile-ids.exit)
+          (set game.exit-pos [x y])
+          (mset x y tile-ids.durable-wall))))))
 
 (fn map-tiles-remap [tile-id x y]
   (if (= tile-id tile-ids.player)
@@ -245,6 +268,10 @@
             (values new-tile-id flip)))
       (= tile-id tile-ids.gem)
       (+ tile-id (% (// game.frame 3) 4))
+      (and game.light-rays (= tile-id tile-ids.space))
+      (+ tile-ids.light-rays (% (// game.light-rays 4) 2))
+      (and (= tile-id tile-ids.exit-open) (< game.frame 30))
+      tile-ids.durable-wall
       tile-id))
 
 (fn map-camera-follow []
@@ -290,6 +317,9 @@
 
 (fn game-on-frame []
   (set game.frame (% (+ 1 game.frame) 60))
+  (when game.light-rays
+    (set game.light-rays (- game.light-rays 1))
+    (when (= 0 game.light-rays) (set game.light-rays nil)))
   (update-player)
   (update-entities)
   (map-camera-follow)
