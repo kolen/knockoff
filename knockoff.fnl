@@ -178,7 +178,7 @@
             (entity-delete entity-id))
 
         ;; Falling down
-        (= (mget (. fallible :x) (+ 1 (. fallible :y))) tile-ids.space)
+        (= (map-peek-near fallible :bottom) tile-ids.space)
         (do (make-space (. fallible :x) (. fallible :y))
             (mset (. fallible :x) (+ 1 (. fallible :y)) (. fallible :fallible))
             (tset fallible :frames 0)
