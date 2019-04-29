@@ -97,7 +97,7 @@
   (when (fallible-fallible? (mget x (- y 1)))
     (fallible-fall x (- y 1) x)))
 
-;; check fall on slippery block at x, y
+;; check fall on slippery block at x, y with hole at holex, y
 (fn fallible-check-slippery-fall [x y holex]
   (when (and (fallible-slippery? (mget x y))
              (fallible-fallible? (mget x (- y 1)))
