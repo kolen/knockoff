@@ -65,7 +65,7 @@
   (set entities-enqueued {}))
 
 (fn map-peek-near [entity dir]
-  (let [[orig-x orig-y] [(. entity :x) (. entity :y)]
+  (let [[orig-x orig-y] [entity.x entity.y]
         [off-x off-y] (. directions dir)
         [x y] [(+ orig-x off-x) (+ orig-y off-y)]]
     (mget x y)))
@@ -149,7 +149,7 @@
   (let [fallible (. entities entity-id)
         tile-id-below (map-peek-near fallible :bottom)]
     (when (~= tile-id-below tile-ids.space)
-      (if (= (. fallible :fallible) tile-ids.gem)
+      (if (= fallible.fallible tile-ids.gem)
           (sfx sounds.gem 100 8 0 5)
           (sfx sounds.boulder 29 30 2 10))
       (if (= tile-id-below tile-ids.player)
@@ -157,12 +157,12 @@
       (if (and (fallible-slippery? tile-id-below)
                (= (map-peek-near fallible :left)        tile-ids.space)
                (= (map-peek-near fallible :bottom-left) tile-ids.space))
-          (do (tset fallible :targetx (- (. fallible :x) 1))
+          (do (tset fallible :targetx (- fallible.x 1))
               (tset fallible :frames 0))
           (and (fallible-slippery? tile-id-below)
                (= (map-peek-near fallible :right)        tile-ids.space)
                (= (map-peek-near fallible :bottom-right) tile-ids.space))
-          (do (tset fallible :targetx (+ (. fallible :x) 1))
+          (do (tset fallible :targetx (+ fallible.x 1))
               (tset fallible :frames 0))
           (entity-delete entity-id)))))
 
@@ -170,18 +170,18 @@
   (let [fallible (. entities entity-id)]
     ;; destructuring would be handy but it might be broken in stable
     ;; tic-80, TODO: check if it works
-    (if (~= (. fallible :fallible) (mget (. fallible :x) (. fallible :y)))
+    (if (~= fallible.fallible (mget fallible.x fallible.y))
         ;; Fallible might be eaten/killed by explosion "concurrently"
         (entity-delete entity-id)
 
         ;; Falling on the side (slippering)
-        (. fallible :targetx)
-        (if (= (mget (. fallible :targetx) (. fallible :y)) tile-ids.space)
+        fallible.targetx
+        (if (= (mget fallible.targetx fallible.y) tile-ids.space)
             ;; Move to slipping direction
             (do
-              (make-space (. fallible :x) (. fallible :y))
-              (mset (. fallible :targetx) (. fallible :y) (. fallible :fallible))
-              (tset fallible :x (. fallible :targetx))
+              (make-space fallible.x fallible.y)
+              (mset fallible.targetx fallible.y fallible.fallible)
+              (tset fallible :x fallible.targetx)
               (tset fallible :targetx nil)
               (tset fallible :frames 0))
             ;; No space to move left - just stay there, entity not
@@ -190,10 +190,10 @@
 
         ;; Falling down
         (= (map-peek-near fallible :bottom) tile-ids.space)
-        (do (make-space (. fallible :x) (. fallible :y))
-            (mset (. fallible :x) (+ 1 (. fallible :y)) (. fallible :fallible))
+        (do (make-space fallible.x fallible.y)
+            (mset fallible.x (+ 1 fallible.y) fallible.fallible)
             (tset fallible :frames 0)
-            (tset fallible :y (+ 1 (. fallible :y)))
+            (tset fallible :y (+ 1 fallible.y))
             (fallible-check-continue entity-id))
 
         ;; No more place to fall
@@ -201,8 +201,8 @@
 
 (fn fallible-update [entity-id]
   (let [fallible (. entities entity-id)]
-    (tset fallible :frames (+ 1 (. fallible :frames)))
-    (if (= fallible-step-period (. fallible :frames))
+    (tset fallible :frames (+ 1 fallible.frames))
+    (if (= fallible-step-period fallible.frames)
         (fallible-step entity-id))))
 
 (fn player-start-move [dir]
@@ -234,7 +234,7 @@
 
 (fn player-eat-gem []
   (sfx sounds.gem 100 8 0 10)
-  (set game.gems.eaten (+ 1 (. game.gems.eaten)))
+  (set game.gems.eaten (+ 1 game.gems.eaten))
   (when (= game.gems.eaten game.gems.to-eat)
     (player-gems-reached)))
 
@@ -271,8 +271,8 @@
 
 (fn update-entities []
   (each [id data (pairs entities)]
-    (if (. data :fallible) (fallible-update id))
-    (if (. data :explosion) (explosion-update id)))
+    (if data.fallible (fallible-update id))
+    (if data.explosion (explosion-update id)))
   (entity-flush-enqueued))
 
 (fn game-level-start []
